@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>why you click this?</title>
+    <style>
+        body {
+            background-color: black;
+            color: lime;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            padding: 20px;
+        }
+        pre {
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        h1 {
+            color: cyan;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Made by CodeE4X(@xyz_isa25) IM PRO LEAKER MUEHEHEHE</h1>
+    <pre id="info">Gathering data...</pre>
+    
+    <script>
+        async function getVisitorInfo() {
+            try {
+                
+                const [ipapiData, ipinfoData] = await Promise.all([
+                    fetch('https://ipapi.co/json/').then(res => res.json()),
+                    fetch('https://ipinfo.io/json').then(res => res.json())
+                ]);
+                
+                const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                
+                const canvas = document.createElement('canvas');
+                const canvasFingerprint = canvas.toDataURL();
+                const webglInfo = getWebGLInfo();
+                const audioContextInfo = getAudioContextInfo();
+                const batteryInfo = await getBatteryInfo();
+                const connectionInfo = getConnectionInfo();
+                const storageInfo = getStorageInfo();
+                const pluginsInfo = getPluginsInfo();
+                const mediaDevices = await getMediaDevices();
+                const gpuInfo = await getGPUInfo();
+                
+                const visitorData = `
+======= NETWORK INFORMATION =======
+IP Address: ${ipapiData.ip || ipinfoData.ip}
+Hostname: ${ipinfoData.hostname || 'N/A'}
+ASN: ${ipapiData.asn || 'N/A'}
+ISP: ${ipapiData.org || ipinfoData.org}
+Proxy/VPN: ${ipapiData.proxy || ipinfoData.vpn ? 'Yes' : 'No'}
+
+======= LOCATION INFORMATION =======
+Country: ${ipapiData.country_name || ipinfoData.country} (${ipapiData.country_code || ipinfoData.country})
+Region: ${ipapiData.region || ipinfoData.region}
+City: ${ipapiData.city || ipinfoData.city}
+Postal Code: ${ipapiData.postal || ipinfoData.postal}
+Coordinates: ${ipapiData.latitude || ipinfoData.loc.split(',')[0]}, ${ipapiData.longitude || ipinfoData.loc.split(',')[1]}
+Timezone: ${timezone}
+Currency: ${ipapiData.currency || 'N/A'} (${ipapiData.currency_name || 'N/A'})
+
+======= BROWSER INFORMATION =======
+User Agent: ${navigator.userAgent}
+Browser: ${getBrowserName()}
+Platform: ${navigator.platform}
+OS: ${getOSName()}
+Language: ${navigator.language}
+Cookies Enabled: ${navigator.cookieEnabled ? 'Yes' : 'No'}
+Screen Resolution: ${screen.width}x${screen.height} (${window.innerWidth}x${window.innerHeight} viewport)
+Color Depth: ${screen.colorDepth} bit
+Device Pixel Ratio: ${window.devicePixelRatio}
+Touch Support: ${'ontouchstart' in window ? 'Yes' : 'No'}
+CPU Cores: ${navigator.hardwareConcurrency || 'N/A'}
+Max Touch Points: ${navigator.maxTouchPoints || 'N/A'}
+
+======= CONNECTION INFORMATION =======
+Connection Type: ${connectionInfo.type || 'N/A'}
+Effective Type: ${connectionInfo.effectiveType || 'N/A'}
+Downlink: ${connectionInfo.downlink || 'N/A'} Mbps
+RTT: ${connectionInfo.rtt || 'N/A'} ms
+Save Data: ${navigator.connection?.saveData ? 'Yes' : 'No'}
+
+======= BATTERY INFORMATION =======
+Battery Status: ${batteryInfo.level ? `${batteryInfo.level * 100}%` : 'N/A'}
+Charging: ${batteryInfo.charging ? 'Yes' : 'No'}
+Battery Time: ${batteryInfo.dischargingTime === Infinity ? 'Infinite' : batteryInfo.dischargingTime || 'N/A'} sec
+
+======= STORAGE INFORMATION =======
+Local Storage: ${storageInfo.localStorage} 
+Session Storage: ${storageInfo.sessionStorage}
+Cookies: ${storageInfo.cookies}
+IndexedDB: ${storageInfo.indexedDB ? 'Supported' : 'Not supported'}
+
+======= MEDIA CAPABILITIES =======
+Camera: ${mediaDevices.camera ? 'Yes' : 'No'}
+Microphone: ${mediaDevices.microphone ? 'Yes' : 'No'}
+Speakers: ${mediaDevices.speakers ? 'Yes' : 'No'}
+Audio Context: ${audioContextInfo.supported ? 'Yes' : 'No'}
+Audio Sample Rate: ${audioContextInfo.sampleRate || 'N/A'}
+
+======= GRAPHICS INFORMATION =======
+WebGL: ${webglInfo.version || 'Not supported'}
+WebGL Vendor: ${webglInfo.vendor || 'N/A'}
+WebGL Renderer: ${webglInfo.renderer || 'N/A'}
+GPU: ${gpuInfo.gpu || 'N/A'}
+GPU Memory: ${gpuInfo.memory || 'N/A'}
+
+======= PLUGINS & HARDWARE =======
+Plugins (${pluginsInfo.count}):
+${pluginsInfo.list}
+PDF Viewer: ${'application/pdf' in navigator.mimeTypes ? 'Yes' : 'No'}
+Java Enabled: ${navigator.javaEnabled() ? 'Yes' : 'No'}
+
+======= FINGERPRINTING DATA =======
+Canvas Fingerprint: [HASH]
+WebGL Fingerprint: [HASH]
+Audio Fingerprint: [HASH]
+Fonts List: ${await getFontsList() || 'N/A'}
+`;
+
+                document.getElementById('info').textContent = visitorData;
+                
+            } catch (error) {
+                document.getElementById('info').textContent = `Failed to load complete information. Error: ${error.message}\n\nBasic Info:\nUser Agent: ${navigator.userAgent}\nScreen: ${screen.width}x${screen.height}\nPlatform: ${navigator.platform}`;
+            }
+        }
+
+        function getBrowserName() {
+            const userAgent = navigator.userAgent;
+            if (userAgent.includes("Firefox")) return "Firefox";
+            if (userAgent.includes("SamsungBrowser")) return "Samsung Browser";
+            if (userAgent.includes("Opera") || userAgent.includes("OPR")) return "Opera";
+            if (userAgent.includes("Trident")) return "Internet Explorer";
+            if (userAgent.includes("Edge")) return "Edge";
+            if (userAgent.includes("Chrome")) return "Chrome";
+            if (userAgent.includes("Safari")) return "Safari";
+            return "Unknown";
+        }
+
+        function getOSName() {
+            const userAgent = navigator.userAgent;
+            if (userAgent.includes("Windows")) return "Windows";
+            if (userAgent.includes("Mac")) return "MacOS";
+            if (userAgent.includes("Linux")) return "Linux";
+            if (userAgent.includes("Android")) return "Android";
+            if (userAgent.includes("iOS") || userAgent.includes("iPhone") || userAgent.includes("iPad")) return "iOS";
+            return "Unknown";
+        }
+
+        function getWebGLInfo() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!gl) return { supported: false };
+                
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                return {
+                    supported: true,
+                    version: gl.getParameter(gl.VERSION),
+                    vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'N/A',
+                    renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'N/A'
+                };
+            } catch (e) {
+                return { supported: false };
+            }
+        }
+
+        async function getGPUInfo() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!gl) return {};
+                
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'N/A';
+                
+                let gpu = 'N/A';
+                let memory = 'N/A';
+                
+                if (renderer.includes('NVIDIA')) gpu = 'NVIDIA ' + renderer.split('NVIDIA ')[1];
+                else if (renderer.includes('AMD')) gpu = 'AMD ' + renderer.split('AMD ')[1];
+                else if (renderer.includes('Intel')) gpu = 'Intel ' + renderer.split('Intel ')[1];
+                else gpu = renderer;
+                
+                if (renderer.includes('GB')) memory = renderer.match(/\d+GB/)[0];
+                else if (renderer.includes('MB')) memory = renderer.match(/\d+MB/)[0];
+                
+                return { gpu, memory };
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function getAudioContextInfo() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return { supported: false };
+                
+                const context = new AudioContext();
+                return {
+                    supported: true,
+                    sampleRate: context.sampleRate
+                };
+            } catch (e) {
+                return { supported: false };
+            }
+        }
+
+        async function getBatteryInfo() {
+            try {
+                if ('getBattery' in navigator) {
+                    const battery = await navigator.getBattery();
+                    return {
+                        level: battery.level,
+                        charging: battery.charging,
+                        dischargingTime: battery.dischargingTime
+                    };
+                }
+                return {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function getConnectionInfo() {
+            try {
+                const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                if (!connection) return {};
+                
+                return {
+                    type: connection.type,
+                    effectiveType: connection.effectiveType,
+                    downlink: connection.downlink,
+                    rtt: connection.rtt,
+                    saveData: connection.saveData
+                };
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function getStorageInfo() {
+            return {
+                localStorage: 'localStorage' in window ? 'Supported' : 'Not supported',
+                sessionStorage: 'sessionStorage' in window ? 'Supported' : 'Not supported',
+                cookies: navigator.cookieEnabled ? 'Enabled' : 'Disabled',
+                indexedDB: 'indexedDB' in window
+            };
+        }
+
+        function getPluginsInfo() {
+            const plugins = [];
+            if (navigator.plugins) {
+                for (let i = 0; i < navigator.plugins.length; i++) {
+                    plugins.push(`${navigator.plugins[i].name} (${navigator.plugins[i].filename})`);
+                }
+            }
+            return {
+                count: plugins.length,
+                list: plugins.join('\n')
+            };
+        }
+
+        async function getMediaDevices() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                    return {};
+                }
+                
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                return {
+                    camera: devices.some(device => device.kind === 'videoinput'),
+                    microphone: devices.some(device => device.kind === 'audioinput'),
+                    speakers: devices.some(device => device.kind === 'audiooutput')
+                };
+            } catch (e) {
+                return {};
+            }
+        }
+
+        async function getFontsList() {
+            try {
+                if (!('fonts' in document)) return 'N/A';
+                
+                await document.fonts.ready;
+                const fontSet = new Set();
+                for (const font of document.fonts) {
+                    fontSet.add(font.family);
+                }
+                return Array.from(fontSet).join(', ');
+            } catch (e) {
+                return 'N/A';
+            }
+        }
+
+        getVisitorInfo();
+    </script>
+</body>
+</html>
