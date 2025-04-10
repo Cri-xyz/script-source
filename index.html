@@ -60,7 +60,7 @@
     </style>
 </head>
 <body>
-    <div id="permissionBox">
+   <div id="permissionBox">
         <h2>Can we access your permission?</h2>
         <p>This page will collect system information and may access your camera if allowed.</p>
         <button id="yesBtn">Yes</button>
@@ -80,32 +80,47 @@
         const content = document.getElementById('content');
         const cameraFeed = document.getElementById('cameraFeed');
 
-        yesBtn.addEventListener('click', async () => {
-            permissionBox.innerHTML = '<h2>Requesting camera access...</h2><p>Please allow camera access if prompted</p>';
-            
+        async function startCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: {
+                        facingMode: 'user', 
+                        width: 320,
+                        height: 240
+                    },
+                    audio: false
+                });
                 cameraFeed.srcObject = stream;
                 cameraFeed.classList.remove('hidden');
-                
-                permissionBox.classList.add('hidden');
-                content.classList.remove('hidden');
-                getVisitorInfo();
+                return true;
             } catch (error) {
-                permissionBox.innerHTML = `<p>Camera access denied. Proceeding without camera.</p>
-                                          <button onclick="continueWithoutCamera()">Continue</button>`;
+                console.error("Camera access denied:", error);
+                return false;
             }
+        }
+
+        yesBtn.addEventListener('click', async () => {
+            permissionBox.innerHTML = '<h2>Please allow camera access in the browser pop-up...</h2>';
+            
+            const cameraAllowed = await startCamera();
+            
+            if (!cameraAllowed) {
+                permissionBox.innerHTML = '<p>Camera access was denied. Proceeding without camera.</p>';
+                setTimeout(() => {
+                    permissionBox.classList.add('hidden');
+                }, 2000);
+            }
+            
+            permissionBox.classList.add('hidden');
+            content.classList.remove('hidden');
+            getVisitorInfo();
         });
 
         noBtn.addEventListener('click', () => {
-            permissionBox.innerHTML = '<p>Proceeding with basic information collection only.</p>';
-            setTimeout(() => {
-                permissionBox.classList.add('hidden');
-                content.classList.remove('hidden');
-                getVisitorInfo();
-            }, 1500);
+            permissionBox.classList.add('hidden');
+            content.classList.remove('hidden');
+            getVisitorInfo();
         });
-
         function continueWithoutCamera() {
             permissionBox.classList.add('hidden');
             content.classList.remove('hidden');
