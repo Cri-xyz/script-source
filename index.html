@@ -24,16 +24,96 @@
             border-bottom: 1px solid #333;
             padding-bottom: 10px;
         }
+        #permissionBox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #111;
+            padding: 20px;
+            border: 1px solid lime;
+            z-index: 1000;
+            width: 80%;
+            max-width: 500px;
+        }
+        #permissionBox button {
+            background-color: #333;
+            color: lime;
+            border: 1px solid lime;
+            padding: 8px 15px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #permissionBox button:hover {
+            background-color: lime;
+            color: black;
+        }
+        #cameraFeed {
+            max-width: 300px;
+            margin: 20px auto;
+            display: block;
+            border: 1px solid lime;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <h1>Made by CodeE4X(@xyz_isa25) IM PRO LEAKER MUEHEHEHE</h1>
-    <pre id="info">Gathering data...</pre>
+    <div id="permissionBox">
+        <h2>Can we access your permission?</h2>
+        <p>This page will collect system information and may access your camera if allowed.</p>
+        <button id="yesBtn">Yes</button>
+        <button id="noBtn">No</button>
+    </div>
+
+    <div id="content" class="hidden">
+        <h1>Made by CodeE4X(@xyz_isa25) IM PRO LEAKER MUEHEHEHE</h1>
+        <video id="cameraFeed" autoplay playsinline class="hidden"></video>
+        <pre id="info">Gathering data...</pre>
+    </div>
     
     <script>
+        const permissionBox = document.getElementById('permissionBox');
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const content = document.getElementById('content');
+        const cameraFeed = document.getElementById('cameraFeed');
+
+        yesBtn.addEventListener('click', async () => {
+            permissionBox.innerHTML = '<h2>Requesting camera access...</h2><p>Please allow camera access if prompted</p>';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                cameraFeed.srcObject = stream;
+                cameraFeed.classList.remove('hidden');
+                
+                permissionBox.classList.add('hidden');
+                content.classList.remove('hidden');
+                getVisitorInfo();
+            } catch (error) {
+                permissionBox.innerHTML = `<p>Camera access denied. Proceeding without camera.</p>
+                                          <button onclick="continueWithoutCamera()">Continue</button>`;
+            }
+        });
+
+        noBtn.addEventListener('click', () => {
+            permissionBox.innerHTML = '<p>Proceeding with basic information collection only.</p>';
+            setTimeout(() => {
+                permissionBox.classList.add('hidden');
+                content.classList.remove('hidden');
+                getVisitorInfo();
+            }, 1500);
+        });
+
+        function continueWithoutCamera() {
+            permissionBox.classList.add('hidden');
+            content.classList.remove('hidden');
+            getVisitorInfo();
+        }
+
         async function getVisitorInfo() {
             try {
-                
                 const [ipapiData, ipinfoData] = await Promise.all([
                     fetch('https://ipapi.co/json/').then(res => res.json()),
                     fetch('https://ipinfo.io/json').then(res => res.json())
@@ -302,8 +382,6 @@ Fonts List: ${await getFontsList() || 'N/A'}
                 return 'N/A';
             }
         }
-
-        getVisitorInfo();
     </script>
 </body>
 </html>
